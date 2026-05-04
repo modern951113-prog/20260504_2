@@ -3,7 +3,7 @@ let facemesh;
 let predictions = []; // 用於儲存臉部辨識結果
 
 
-function setup() {
+async function setup() { // 將 setup 函式標記為 async
   // 建立一個填滿整個視窗的畫布
   createCanvas(windowWidth, windowHeight);
 
@@ -14,28 +14,16 @@ function setup() {
 
   // 當攝影機影像的元數據（如寬高）載入完成後，才初始化 facemesh 模型
   // 這有助於確保 capture 物件在 ml5.facemesh 呼叫時已完全準備好
-  capture.elt.onloadedmetadata = function() {
-    // 在嘗試使用 ml5.facemesh 之前，先檢查 ml5 函式庫和 facemesh 功能是否已載入
-    if (typeof ml5 === 'undefined') {
-      console.error("錯誤：ml5.js 函式庫未載入或初始化。請確認 'ml5.min.js' 已正確連結到您的 index.html。");
-      return; // 防止進一步的錯誤
-    }
-    if (typeof ml5.facemesh !== 'function') {
-      console.error("錯誤：ml5.facemesh 不是一個函式。這可能表示 ml5.js 函式庫載入有問題或版本不相容。");
-      console.log("目前的 ml5 物件：", ml5); // 輸出 ml5 物件以供檢查
-      return; // 防止進一步的錯誤
-    }
-    facemesh = ml5.facemesh(capture, modelReady);
-  };
-}
+  capture.elt.onloadedmetadata = async function() {
+    // 載入 faceMesh 模型
+    facemesh = await ml5.faceMesh();
+    console.log("Facemesh model ready!");
 
-// 模型載入完成後的回呼函式
-function modelReady() {
-  console.log("Facemesh model ready!");
-  // 設定事件監聽，當偵測到臉部時，更新 predictions 陣列
-  facemesh.on("predict", results => {
-    predictions = results;
-  });
+    // 開始監聽預測
+    facemesh.listen(capture, results => {
+      predictions = results;
+    });
+  };
 }
 
 function draw() {
